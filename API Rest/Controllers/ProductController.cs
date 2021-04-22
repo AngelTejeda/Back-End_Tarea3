@@ -17,7 +17,7 @@ namespace API_Rest.Controllers
         [HttpGet]
         public IQueryable<Product> Get()
         {
-            return productSC.GetAllProducts();
+            return new ProductSC().GetAllProducts();
         }
 
         // GET api/<ProductController>/5

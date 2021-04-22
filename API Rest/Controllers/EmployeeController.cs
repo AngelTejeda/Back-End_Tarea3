@@ -31,7 +31,7 @@ namespace API_Rest.Controllers
 
         // POST api/<EmployeeController>
         [HttpPost]
-        public void Post([FromBody] EmployeeDTO newEmployee)
+        public void Post([FromBody] EmployeeBasicDataDTO newEmployee)
         {
             EmployeeSC.AddNewEmployee(newEmployee);
         }

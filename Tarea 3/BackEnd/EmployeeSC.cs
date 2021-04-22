@@ -28,7 +28,7 @@ namespace Tarea_3.BackEnd
             }
             catch (InvalidOperationException ex)
             {
-                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName));
+                ex.SetMessage(DbExceptionMessages.InstanceNotFound(InstanceName, id));
                 throw;
             }
         }

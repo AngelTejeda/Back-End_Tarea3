@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using Tarea_3.BackEnd;
 using Tarea_3.DataAccess;
@@ -12,41 +15,87 @@ namespace API_Rest.Controllers
     [ApiController]
     public class CustomerController : ControllerBase
     {
-        private readonly CustomerSC customerSC = new();
+        private static string GetShortExceptionMessage(Exception ex)
+        {
+            return ex.InnerException + ":" + ex.Message + "\n\nStack Trace\n-----------------\n" + ex.StackTrace;
+        }
+
+        private IActionResult InternalServerError(Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, GetShortExceptionMessage(ex));
+        }
 
         // GET: api/<CustomerController>
         [HttpGet]
-        public IQueryable<Customer> Get()
+        public IActionResult Get()
         {
-            return customerSC.GetAllCustomers();
+            List<Customer> customers = new CustomerSC().GetAllCustomers().ToList();
+
+            return Ok(customers);
         }
 
         // GET api/<CustomerController>/5
         [HttpGet("{id}")]
-        public Customer Get(string id)
+        public IActionResult Get(string id)
         {
-            return customerSC.GetCustomerById(id);
+            try
+            {
+                Customer customer = new CustomerSC().GetCustomerById(id);
+
+                return Ok(customer);
+            }
+            catch(Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         // POST api/<CustomerController>
         [HttpPost]
-        public void Post([FromBody] CustomerDTO newCustomer)
+        public IActionResult Post([FromBody] CustomerBasicDataDTO newCustomer)
         {
-            customerSC.AddNewCustomer(newCustomer);
+            try
+            {
+                new CustomerSC().AddNewCustomer(newCustomer);
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         // PUT api/<CustomerController>/5
         [HttpPut("{id}")]
-        public void Put(string id, [FromBody] CustomerDTO modifiedCustomer)
+        public IActionResult Put(string id, [FromBody] CustomerBasicDataDTO modifiedCustomer)
         {
-            customerSC.UpdateCustomer(id, modifiedCustomer);
+            try
+            {
+                new CustomerSC().UpdateCustomer(id, modifiedCustomer);
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         // DELETE api/<CustomerController>/5
         [HttpDelete("{id}")]
-        public void Delete(string id)
+        public IActionResult Delete(string id)
         {
-            customerSC.DeleteCustomer(id);
+            try
+            {
+                new CustomerSC().DeleteCustomer(id);
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
     }
 }

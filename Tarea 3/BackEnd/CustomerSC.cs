@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using Tarea_3.DataAccess;
@@ -12,7 +13,15 @@ namespace Tarea_3.BackEnd
 
         public IQueryable<Customer> GetAllCustomers()
         {
-            return dbContext.Customers.AsQueryable();
+            IQueryable<Customer> customers;
+
+            using (NorthwindContext context = new())
+            {
+                customers = context.Customers.AsQueryable();
+            }
+
+            return customers;
+            //return dbContext.Customers.AsQueryable();
         }
 
         public Customer GetCustomerById(string id)
@@ -28,7 +37,7 @@ namespace Tarea_3.BackEnd
             }
             catch (InvalidOperationException ex)
             {
-                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName));
+                ex.SetMessage(DbExceptionMessages.InstanceNotFound(InstanceName, id));
                 throw;
             }
         }
@@ -79,6 +88,11 @@ namespace Tarea_3.BackEnd
                 dbContext.Customers.Remove(dataBaseCustomer);
 
                 dbContext.SaveChanges();
+            }
+            catch (SqlException ex)
+            {
+                ex.SetMessage("Conflicto de llave foránea");
+                throw;
             }
             catch (Exception ex) when (
                 ex is DbUpdateException || ex is DbUpdateConcurrencyException
