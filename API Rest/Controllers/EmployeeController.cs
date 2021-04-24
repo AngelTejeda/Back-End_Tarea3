@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Tarea_3.BackEnd;
-using Tarea_3.Models;
-using Tarea_3.DataAccess;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using Tarea_3.BackEnd;
+using Tarea_3.DataAccess;
+using Tarea_3.Models;
 
 namespace API_Rest.Controllers
 {
@@ -13,41 +14,108 @@ namespace API_Rest.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase
     {
-        private EmployeeSC EmployeeSC = new();
+        private IActionResult InternalServerError(Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
 
         // GET: api/<EmployeeController>
         [HttpGet]
-        public IQueryable<Employee> Get()
+        public IActionResult Get()
         {
-            return EmployeeSC.GetAllEmployees();
+            List<EmployeePersonalInfoDTO> employees = new();
+
+            using (NorthwindContext dbContext = new())
+            {
+                IQueryable<Employee> dbEmployees = EmployeeSC.GetAllEmployees(dbContext).AsNoTracking();
+
+                foreach(Employee dbEmployee in dbEmployees)
+                {
+                    employees.Add(new EmployeePersonalInfoDTO(dbEmployee));
+                };
+            }
+
+            return Ok(employees);
         }
 
         // GET api/<EmployeeController>/5
         [HttpGet("{id}")]
-        public Employee Get(int id)
+        public IActionResult Get(int id)
         {
-            return EmployeeSC.GetEmployeeById(id);
+            try
+            {
+                EmployeePersonalInfoDTO employee;
+
+                using (NorthwindContext dbContext = new())
+                {
+                    Employee dbEmployee = EmployeeSC.GetEmployeeById(dbContext, id);
+
+                    employee = new(dbEmployee);
+                }
+
+                return Ok(employee);
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         // POST api/<EmployeeController>
         [HttpPost]
-        public void Post([FromBody] EmployeeBasicDataDTO newEmployee)
+        public IActionResult Post([FromBody] EmployeePersonalInfoDTO newEmployee)
         {
-            EmployeeSC.AddNewEmployee(newEmployee);
+            try
+            {
+                using (NorthwindContext dbContext = new())
+                {
+                    EmployeeSC.AddNewEmployee(dbContext, newEmployee);
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         // PUT api/<EmployeeController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] EmployeeDTO modifiedEmployee)
+        public IActionResult Put(int id, [FromBody] EmployeePersonalInfoDTO modifiedEmployee)
         {
-            EmployeeSC.UpdateEmployee(id, modifiedEmployee);
+            try
+            {
+                using (NorthwindContext dbContext = new())
+                {
+                    EmployeeSC.UpdateEmployee(dbContext, id, modifiedEmployee);
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         // DELETE api/<EmployeeController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(int id)
         {
-            EmployeeSC.DeleteEmployee(id);
+            try
+            {
+                using (NorthwindContext dbContext = new())
+                {
+                    EmployeeSC.DeleteEmployee(dbContext, id);
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
     }
 }

@@ -20,5 +20,35 @@ namespace Tarea_3
 
             fieldInfo.SetValue(exception, message);
         }
+
+        public static string GetFullMessage(this Exception exception)
+        {
+            string fullMessage = exception.Message;
+            Exception innerException = exception;
+
+            while(innerException != null)
+            {
+                fullMessage += "\n\n" + innerException.Message;
+
+                innerException = innerException.InnerException;
+            }
+
+            return fullMessage;
+        }
+
+        public static string GetFullStackTrace(this Exception exception)
+        {
+            string stackTrace = exception.StackTrace;
+            Exception innerException = exception.InnerException;
+
+            while(innerException != null)
+            {
+                stackTrace = innerException.StackTrace + "\n" + stackTrace;
+
+                innerException = innerException.InnerException;
+            }
+
+            return stackTrace;
+        }
     }
 }

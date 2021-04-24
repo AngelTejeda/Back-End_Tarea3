@@ -7,29 +7,22 @@ using Tarea_3.BackEnd;
 using Tarea_3.DataAccess;
 using Tarea_3.Models;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace API_Rest.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class CustomerController : ControllerBase
     {
-        private static string GetShortExceptionMessage(Exception ex)
-        {
-            return ex.InnerException + ":" + ex.Message + "\n\nStack Trace\n-----------------\n" + ex.StackTrace;
-        }
-
         private IActionResult InternalServerError(Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, GetShortExceptionMessage(ex));
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
         }
 
         // GET: api/<CustomerController>
         [HttpGet]
         public IActionResult Get()
         {
-            List<Customer> customers = new CustomerSC().GetAllCustomers().ToList();
+            List<Customer> customers = CustomerSC.GetAllCustomers().ToList();
 
             return Ok(customers);
         }
@@ -40,45 +33,48 @@ namespace API_Rest.Controllers
         {
             try
             {
-                Customer customer = new CustomerSC().GetCustomerById(id);
+                Customer customer = CustomerSC.GetCustomerById(id);
 
                 return Ok(customer);
             }
             catch(Exception ex)
             {
                 return InternalServerError(ex);
+                //throw;
             }
         }
 
         // POST api/<CustomerController>
         [HttpPost]
-        public IActionResult Post([FromBody] CustomerBasicDataDTO newCustomer)
+        public IActionResult Post([FromBody] CustomerContactInfoDTO newCustomer)
         {
             try
             {
-                new CustomerSC().AddNewCustomer(newCustomer);
+                CustomerSC.AddNewCustomer(newCustomer);
 
                 return Ok();
             }
             catch (Exception ex)
             {
                 return InternalServerError(ex);
+                //throw;
             }
         }
 
         // PUT api/<CustomerController>/5
         [HttpPut("{id}")]
-        public IActionResult Put(string id, [FromBody] CustomerBasicDataDTO modifiedCustomer)
+        public IActionResult Put(string id, [FromBody] CustomerContactInfoDTO modifiedCustomer)
         {
             try
             {
-                new CustomerSC().UpdateCustomer(id, modifiedCustomer);
+                CustomerSC.UpdateCustomer(id, modifiedCustomer);
 
                 return Ok();
             }
             catch (Exception ex)
             {
                 return InternalServerError(ex);
+                //throw;
             }
         }
 
@@ -88,13 +84,14 @@ namespace API_Rest.Controllers
         {
             try
             {
-                new CustomerSC().DeleteCustomer(id);
+                CustomerSC.DeleteCustomer(id);
 
                 return Ok();
             }
             catch (Exception ex)
             {
                 return InternalServerError(ex);
+                //throw;
             }
         }
     }

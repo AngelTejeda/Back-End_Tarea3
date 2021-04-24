@@ -10,32 +10,37 @@ namespace Tarea_3
     {
         public static string FieldIsRequired(string field)
         {
-            return $"El campo \"{field}\" es obligatorio.";
+            return $"The field \"{field}\" is required.";
         }
 
-        public static string InstanceNotFound(string instanceName, string id)
+        public static string InstanceNotFound(string instanceName, object id)
         {
-            return $"No se encontró un {instanceName} con el id {id}.";
+            return $"No {instanceName} with id {id} was found.";
         }
 
-        public static string InstanceNotFound(string instanceName, int id)
+        public static string FailedToAdd(string instanceName, Exception ex)
         {
-            return InstanceNotFound(instanceName, id.ToString());
+            return $"An error ocurred while adding the {instanceName}: {ex.Message}";
         }
 
-        public static string FailedToAdd(string instanceName)
+        public static string FailedToUpdate(string instanceName, object id, Exception ex)
         {
-            return $"Ha ocurrido un error al insertar al {instanceName}.";
+            return $"An error ocurred while updating the {instanceName} with id {id}: {ex.Message}";
         }
 
-        public static string FailedToUpdate(string instanceName)
+        public static string FailedToDelete(string instanceName, object id, Exception ex)
         {
-            return $"Ha ocurrido un error al modificar la información del {instanceName}.";
+            return $"An error ocurred while deleting the {instanceName} with id {id}: {ex.Message}";
         }
 
-        public static string FailedToDelete(string instanceName, object id)
+        public static string UnexpectedFailure(Exception ex)
         {
-            return $"Ha ocurrido un error al eliminar al {instanceName} con id {id}.";
+            string extraInfo = $": {ex.GetFullMessage()}\n\n" +
+                    $"Stack Trace:\n" +
+                    $"----------\n" +
+                    $"{ex.GetFullStackTrace()}";
+
+            return $"An unexpected error ocurred while updating the DataBase: {extraInfo}";
         }
     }
 }

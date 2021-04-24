@@ -1,30 +1,24 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Tarea_3.DataAccess;
 using Tarea_3.Models;
 
 namespace Tarea_3.BackEnd
 {
-    public class CustomerSC : BaseSC
+    public static class CustomerSC
     {
-        private readonly string InstanceName = "cliente";
+        private static readonly string InstanceName = "client";
+        private static readonly NorthwindContext dbContext = new();
 
-        public IQueryable<Customer> GetAllCustomers()
+        public static IQueryable<Customer> GetAllCustomers()
         {
-            IQueryable<Customer> customers;
-
-            using (NorthwindContext context = new())
-            {
-                customers = context.Customers.AsQueryable();
-            }
-
-            return customers;
-            //return dbContext.Customers.AsQueryable();
+            return dbContext.Customers.AsQueryable();
         }
 
-        public Customer GetCustomerById(string id)
+        public static Customer GetCustomerById(string id)
         {
             try
             {
@@ -42,7 +36,7 @@ namespace Tarea_3.BackEnd
             }
         }
 
-        public void AddNewCustomer(CustomerDTO newCustomer)
+        public static void AddNewCustomer(CustomerDTO newCustomer)
         {
             try
             {
@@ -52,15 +46,24 @@ namespace Tarea_3.BackEnd
                 dbContext.SaveChanges();
             }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                && ex.InnerException != null
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName));
+                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName, ex.InnerException));
+                throw;
+            }
+            catch (Exception ex) when (
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
+            )
+            {
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }
 
-        public void UpdateCustomer(string id, CustomerDTO modifiedCustomer)
+        public static void UpdateCustomer(string id, CustomerDTO modifiedCustomer)
         {
             try
             {
@@ -71,15 +74,24 @@ namespace Tarea_3.BackEnd
                 dbContext.SaveChanges();
             }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                && ex.InnerException != null
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName));
+                ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName, id, ex));
+                throw;
+            }
+            catch (Exception ex) when (
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
+            )
+            {
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }
 
-        public void DeleteCustomer(string id)
+        public static void DeleteCustomer(string id)
         {
             try
             {
@@ -89,16 +101,20 @@ namespace Tarea_3.BackEnd
 
                 dbContext.SaveChanges();
             }
-            catch (SqlException ex)
+            catch (Exception ex) when (
+                ex is DbUpdateException
+                && ex.InnerException != null
+            )
             {
-                ex.SetMessage("Conflicto de llave foránea");
+                ex.SetMessage(DbExceptionMessages.FailedToDelete(InstanceName, id, ex.InnerException));
                 throw;
             }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToDelete(InstanceName, id));
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }

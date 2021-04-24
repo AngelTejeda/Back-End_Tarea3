@@ -28,7 +28,7 @@ namespace Tarea_3.BackEnd
             }
             catch (InvalidOperationException ex)
             {
-                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName));
+                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName, ex));
                 throw;
             }
         }
@@ -43,10 +43,19 @@ namespace Tarea_3.BackEnd
                 dbContext.SaveChanges();
             }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                && ex.InnerException != null
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName));
+                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName, ex.InnerException));
+                throw;
+            }
+            catch (Exception ex) when (
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
+            )
+            {
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }
@@ -62,10 +71,19 @@ namespace Tarea_3.BackEnd
                 dbContext.SaveChanges();
             }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                && ex.InnerException != null
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName));
+                ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName, id, ex));
+                throw;
+            }
+            catch (Exception ex) when (
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
+            )
+            {
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }
@@ -81,10 +99,19 @@ namespace Tarea_3.BackEnd
                 dbContext.SaveChanges();
             }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                && ex.InnerException != null
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToDelete(InstanceName, id));
+                ex.SetMessage(DbExceptionMessages.FailedToDelete(InstanceName, id, ex.InnerException));
+                throw;
+            }
+            catch (Exception ex) when (
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
+            )
+            {
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }

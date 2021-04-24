@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using Tarea_3.DataAccess;
@@ -6,20 +7,20 @@ using Tarea_3.Models;
 
 namespace Tarea_3.BackEnd
 {
-    public class EmployeeSC : BaseSC
+    public static class EmployeeSC
     {
-        private readonly string InstanceName = "empleado";
+        private static readonly string InstanceName = "employee";
 
-        public IQueryable<Employee> GetAllEmployees()
+        public static IQueryable<Employee> GetAllEmployees(NorthwindContext dbContext)
         {
             return dbContext.Employees.AsQueryable();
         }
 
-        public Employee GetEmployeeById(int id)
+        public static Employee GetEmployeeById(NorthwindContext dbContext, int id)
         {
             try
             {
-                return GetAllEmployees().First(employee => employee.EmployeeId == id);
+                return GetAllEmployees(dbContext).First(employee => employee.EmployeeId == id);
             }
             catch (ArgumentNullException ex)
             {
@@ -33,7 +34,14 @@ namespace Tarea_3.BackEnd
             }
         }
 
-        public void AddNewEmployee(EmployeeDTO newEmployee)
+        private static bool IsSqlException(Exception ex)
+        {
+            return ex is DbUpdateException
+                && ex.InnerException != null
+                && ex.InnerException is SqlException;
+        }
+
+        public static void AddNewEmployee(NorthwindContext dbContext,  EmployeeDTO newEmployee)
         {
             try
             {
@@ -42,49 +50,77 @@ namespace Tarea_3.BackEnd
                 dbContext.Employees.Add(dataBaseEmployee);
                 dbContext.SaveChanges();
             }
+            catch (Exception ex) when (IsSqlException(ex))
+                //ex is DbUpdateException
+                //&& ex.InnerException != null
+                //&& ex.InnerException is SqlException
+            //)
+            {
+                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName, ex.InnerException));
+                throw;
+            }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName));
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }
 
-        public void UpdateEmployee(int id, EmployeeDTO modifiedEmployee)
+        public static void UpdateEmployee(NorthwindContext dbContext, int id, EmployeeDTO modifiedEmployee)
         {
             try
             {
-                Employee dataBaseEmployee = GetEmployeeById(id);
+                Employee dataBaseEmployee = GetEmployeeById(dbContext, id);
 
                 modifiedEmployee.ModifyDataBaseEmployee(dataBaseEmployee);
 
                 dbContext.SaveChanges();
             }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                && ex.InnerException != null
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName));
+                ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName, id, ex.InnerException));
+                throw;
+            }
+            catch (Exception ex) when (
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
+            )
+            {
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }
 
-        public void DeleteEmployee(int id)
+        public static void DeleteEmployee(NorthwindContext dbContext, int id)
         {
             try
             {
-                Employee dataBaseEmployee = GetEmployeeById(id);
+                Employee dataBaseEmployee = GetEmployeeById(dbContext, id);
 
                 dbContext.Employees.Remove(dataBaseEmployee);
 
                 dbContext.SaveChanges();
             }
             catch (Exception ex) when (
-                ex is DbUpdateException || ex is DbUpdateConcurrencyException
+                ex is DbUpdateException
+                && ex.InnerException != null
             )
             {
-                ex.SetMessage(DbExceptionMessages.FailedToDelete(InstanceName, id));
+                ex.SetMessage(DbExceptionMessages.FailedToDelete(InstanceName, id, ex.InnerException));
+                throw;
+            }
+            catch (Exception ex) when (
+                ex is DbUpdateException
+                || ex is DbUpdateConcurrencyException
+            )
+            {
+                ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }
