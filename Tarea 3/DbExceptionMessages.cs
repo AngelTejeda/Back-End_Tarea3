@@ -35,12 +35,7 @@ namespace Tarea_3
 
         public static string UnexpectedFailure(Exception ex)
         {
-            string extraInfo = $": {ex.GetFullMessage()}\n\n" +
-                    $"Stack Trace:\n" +
-                    $"----------\n" +
-                    $"{ex.GetFullStackTrace()}";
-
-            return $"An unexpected error ocurred while updating the DataBase: {extraInfo}";
+            return $"An unexpected error ocurred while updating the DataBase: {ex.GetFullMessage()}";
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Linq;
 using Tarea_3.DataAccess;
 using Tarea_3.Models;
@@ -34,14 +32,7 @@ namespace Tarea_3.BackEnd
             }
         }
 
-        private static bool IsSqlException(Exception ex)
-        {
-            return ex is DbUpdateException
-                && ex.InnerException != null
-                && ex.InnerException is SqlException;
-        }
-
-        public static void AddNewEmployee(NorthwindContext dbContext,  EmployeeDTO newEmployee)
+        public static int AddNewEmployee(NorthwindContext dbContext,  EmployeeDTO newEmployee)
         {
             try
             {
@@ -49,24 +40,20 @@ namespace Tarea_3.BackEnd
 
                 dbContext.Employees.Add(dataBaseEmployee);
                 dbContext.SaveChanges();
+
+                return dataBaseEmployee.EmployeeId;
             }
-            catch (Exception ex) when (IsSqlException(ex))
-                //ex is DbUpdateException
-                //&& ex.InnerException != null
-                //&& ex.InnerException is SqlException
-            //)
+            catch (Exception ex) when (ExceptionTypes.IsSqlException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName, ex.InnerException));
                 throw;
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                || ex is DbUpdateConcurrencyException
-            )
+            catch (Exception ex) when (ExceptionTypes.IsDbException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
+
         }
 
         public static void UpdateEmployee(NorthwindContext dbContext, int id, EmployeeDTO modifiedEmployee)
@@ -79,18 +66,12 @@ namespace Tarea_3.BackEnd
 
                 dbContext.SaveChanges();
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                && ex.InnerException != null
-            )
+            catch (Exception ex) when (ExceptionTypes.IsSqlException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName, id, ex.InnerException));
                 throw;
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                || ex is DbUpdateConcurrencyException
-            )
+            catch (Exception ex) when (ExceptionTypes.IsDbException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
@@ -107,18 +88,12 @@ namespace Tarea_3.BackEnd
 
                 dbContext.SaveChanges();
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                && ex.InnerException != null
-            )
+            catch (Exception ex) when (ExceptionTypes.IsSqlException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.FailedToDelete(InstanceName, id, ex.InnerException));
                 throw;
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                || ex is DbUpdateConcurrencyException
-            )
+            catch (Exception ex) when (ExceptionTypes.IsDbException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;

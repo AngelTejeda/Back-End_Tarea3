@@ -7,22 +7,22 @@ using Tarea_3.DataAccess;
 
 namespace Tarea_3.Models
 {
-    public class ProductBasicDataDTO : ProductDTO
+    public class ProductBasicInfoDTO : ProductDTO
     {
         public string Nombre { get; set; }
         public bool Descontinuado { get; set; }
 
-        public ProductBasicDataDTO()
+        public ProductBasicInfoDTO()
         {
 
         }
-        public ProductBasicDataDTO(string name, bool descontinuado)
+        public ProductBasicInfoDTO(string name, bool descontinuado)
         {
             Nombre = name;
             Descontinuado = descontinuado;
         }
 
-        public ProductBasicDataDTO(Product product)
+        public ProductBasicInfoDTO(Product product)
         {
             Nombre = product.ProductName;
             Descontinuado = product.Discontinued;

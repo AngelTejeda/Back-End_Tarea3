@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Tarea_3.BackEnd;
 using Tarea_3.DataAccess;
 using Tarea_3.Models;
-
 
 namespace API_Rest.Controllers
 {
@@ -13,48 +14,110 @@ namespace API_Rest.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
+        private IActionResult InternalServerError(Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+
         // GET: api/<ProductController>
         [HttpGet]
-        public IQueryable<Product> Get()
+        public IActionResult Get()
         {
-            return new ProductSC().GetAllProducts();
+            List<ProductBasicInfoDTO> products = new();
+
+            using (NorthwindContext dbContext = new())
+            {
+                IQueryable<Product> dbProducts = ProductSC.GetAllProducts(dbContext).AsNoTracking();
+
+                foreach (Product dbProduct in dbProducts)
+                {
+                    products.Add(new ProductBasicInfoDTO(dbProduct));
+                };
+            }
+
+            return Ok(products);
         }
 
         // GET api/<ProductController>/5
         [HttpGet("{id}")]
-        public Product Get(int id)
+        public IActionResult Get(int id)
         {
-            return new ProductSC().GetProductById(id);
+            try
+            {
+                ProductBasicInfoDTO product;
+
+                using (NorthwindContext dbContext = new())
+                {
+                    Product dbProduct = ProductSC.GetProductById(dbContext, id);
+
+                    product = new(dbProduct);
+                }
+
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         // POST api/<ProductController>
         [HttpPost]
-        public IActionResult Post([FromBody] ProductBasicDataDTO newProduct)
+        public IActionResult Post([FromBody] ProductBasicInfoDTO newProduct)
         {
+            int id;
+
             try
             {
-                new ProductSC().AddNewProduct(newProduct);
+                using (NorthwindContext dbContext = new())
+                {
+                    id = ProductSC.AddNewProduct(dbContext, newProduct);
+                }
 
-                return Ok();
+                return Ok("Id: " + id);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return InternalServerError(ex);
             }
         }
 
         // PUT api/<ProductController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] ProductBasicDataDTO modifiedProduct)
+        public IActionResult Put(int id, [FromBody] ProductBasicInfoDTO modifiedProduct)
         {
-            new ProductSC().UpdateProduct(id, modifiedProduct);
+            try
+            {
+                using (NorthwindContext dbContext = new())
+                {
+                    ProductSC.UpdateProduct(dbContext, id, modifiedProduct);
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         // DELETE api/<ProductController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(int id)
         {
-            new ProductSC().DeleteProduct(id);
+            try
+            {
+                using (NorthwindContext dbContext = new())
+                {
+                    ProductSC.DeleteProduct(dbContext, id);
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
     }
 }

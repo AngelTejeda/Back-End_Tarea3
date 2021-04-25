@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,17 @@ namespace API_Rest.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            List<Customer> customers = CustomerSC.GetAllCustomers().ToList();
+            List<CustomerContactInfoDTO> customers = new();
+
+            using (NorthwindContext dbContext = new())
+            {
+                IQueryable<Customer> dbCustomers = CustomerSC.GetAllCustomers(dbContext).AsNoTracking();
+
+                foreach (Customer dbCustomer in dbCustomers)
+                {
+                    customers.Add(new CustomerContactInfoDTO(dbCustomer));
+                };
+            }
 
             return Ok(customers);
         }
@@ -33,14 +44,20 @@ namespace API_Rest.Controllers
         {
             try
             {
-                Customer customer = CustomerSC.GetCustomerById(id);
+                CustomerContactInfoDTO customer;
+
+                using (NorthwindContext dbContext = new())
+                {
+                    Customer dbCustomer = CustomerSC.GetCustomerById(dbContext, id);
+
+                    customer = new(dbCustomer);
+                }
 
                 return Ok(customer);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return InternalServerError(ex);
-                //throw;
             }
         }
 
@@ -48,16 +65,20 @@ namespace API_Rest.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] CustomerContactInfoDTO newCustomer)
         {
+            string id;
+
             try
             {
-                CustomerSC.AddNewCustomer(newCustomer);
+                using (NorthwindContext dbContext = new())
+                {
+                    id = CustomerSC.AddNewCustomer(dbContext, newCustomer);
+                }
 
-                return Ok();
+                return Ok("Id: " + id);
             }
             catch (Exception ex)
             {
                 return InternalServerError(ex);
-                //throw;
             }
         }
 
@@ -67,14 +88,16 @@ namespace API_Rest.Controllers
         {
             try
             {
-                CustomerSC.UpdateCustomer(id, modifiedCustomer);
+                using (NorthwindContext dbContext = new())
+                {
+                    CustomerSC.UpdateCustomer(dbContext, id, modifiedCustomer);
+                }
 
                 return Ok();
             }
             catch (Exception ex)
             {
                 return InternalServerError(ex);
-                //throw;
             }
         }
 
@@ -84,14 +107,16 @@ namespace API_Rest.Controllers
         {
             try
             {
-                CustomerSC.DeleteCustomer(id);
+                using (NorthwindContext dbContext = new())
+                {
+                    CustomerSC.DeleteCustomer(dbContext, id);
+                }
 
                 return Ok();
             }
             catch (Exception ex)
             {
                 return InternalServerError(ex);
-                //throw;
             }
         }
     }

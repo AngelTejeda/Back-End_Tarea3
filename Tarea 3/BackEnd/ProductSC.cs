@@ -1,25 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Linq;
 using Tarea_3.DataAccess;
 using Tarea_3.Models;
 
 namespace Tarea_3.BackEnd
 {
-    public class ProductSC : BaseSC
+    public static class ProductSC
     {
-        private readonly string InstanceName = "producto";
+        private static readonly string InstanceName = "product";
 
-        public IQueryable<Product> GetAllProducts()
+        public static IQueryable<Product> GetAllProducts(NorthwindContext dbContext)
         {
             return dbContext.Products.AsQueryable();
         }
 
-        public Product GetProductById(int id)
+        public static Product GetProductById(NorthwindContext dbContext, int id)
         {
             try
             {
-                return GetAllProducts().First(product => product.ProductId == id);
+                return GetAllProducts(dbContext).First(product => product.ProductId == id);
             }
             catch (ArgumentNullException ex)
             {
@@ -28,12 +27,12 @@ namespace Tarea_3.BackEnd
             }
             catch (InvalidOperationException ex)
             {
-                ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName, ex));
+                ex.SetMessage(DbExceptionMessages.InstanceNotFound(InstanceName, id));
                 throw;
             }
         }
 
-        public void AddNewProduct(ProductDTO newProduct)
+        public static int AddNewProduct(NorthwindContext dbContext, ProductDTO newProduct)
         {
             try
             {
@@ -41,75 +40,60 @@ namespace Tarea_3.BackEnd
 
                 dbContext.Products.Add(dataBaseProduct);
                 dbContext.SaveChanges();
+
+                return dataBaseProduct.ProductId;
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                && ex.InnerException != null
-            )
+            catch (Exception ex) when (ExceptionTypes.IsSqlException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.FailedToAdd(InstanceName, ex.InnerException));
                 throw;
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                || ex is DbUpdateConcurrencyException
-            )
+            catch (Exception ex) when (ExceptionTypes.IsDbException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
+
         }
 
-        public void UpdateProduct(int id, ProductDTO modifiedProduct)
+        public static void UpdateProduct(NorthwindContext dbContext, int id, ProductDTO modifiedProduct)
         {
             try
             {
-                Product dataBaseProduct = GetProductById(id);
+                Product dataBaseProduct = GetProductById(dbContext, id);
 
                 modifiedProduct.ModifyDataBaseProduct(dataBaseProduct);
 
                 dbContext.SaveChanges();
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                && ex.InnerException != null
-            )
+            catch (Exception ex) when (ExceptionTypes.IsSqlException(ex))
             {
-                ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName, id, ex));
+                ex.SetMessage(DbExceptionMessages.FailedToUpdate(InstanceName, id, ex.InnerException));
                 throw;
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                || ex is DbUpdateConcurrencyException
-            )
+            catch (Exception ex) when (ExceptionTypes.IsDbException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;
             }
         }
 
-        public void DeleteProduct(int id)
+        public static void DeleteProduct(NorthwindContext dbContext, int id)
         {
             try
             {
-                Product dataBaseProduct = GetProductById(id);
+                Product dataBaseProduct = GetProductById(dbContext, id);
 
                 dbContext.Products.Remove(dataBaseProduct);
 
                 dbContext.SaveChanges();
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                && ex.InnerException != null
-            )
+            catch (Exception ex) when (ExceptionTypes.IsSqlException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.FailedToDelete(InstanceName, id, ex.InnerException));
                 throw;
             }
-            catch (Exception ex) when (
-                ex is DbUpdateException
-                || ex is DbUpdateConcurrencyException
-            )
+            catch (Exception ex) when (ExceptionTypes.IsDbException(ex))
             {
                 ex.SetMessage(DbExceptionMessages.UnexpectedFailure(ex));
                 throw;

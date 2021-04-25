@@ -65,14 +65,16 @@ namespace API_Rest.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] EmployeePersonalInfoDTO newEmployee)
         {
+            int id;
+
             try
             {
                 using (NorthwindContext dbContext = new())
                 {
-                    EmployeeSC.AddNewEmployee(dbContext, newEmployee);
+                    id = EmployeeSC.AddNewEmployee(dbContext, newEmployee);
                 }
 
-                return Ok();
+                return Ok("Id: " + id);
             }
             catch (Exception ex)
             {
