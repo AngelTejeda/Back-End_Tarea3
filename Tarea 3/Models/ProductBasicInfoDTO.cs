@@ -9,46 +9,41 @@ namespace Tarea_3.Models
 {
     public class ProductBasicInfoDTO : ProductDTO
     {
-        public string Nombre { get; set; }
-        public bool Descontinuado { get; set; }
+        public decimal? Price { get; set; }
 
         public ProductBasicInfoDTO()
         {
 
         }
-        public ProductBasicInfoDTO(string name, bool descontinuado)
+        public ProductBasicInfoDTO(string name, bool isDiscontinued, decimal price)
         {
-            Nombre = name;
-            Descontinuado = descontinuado;
+            Name = name;
+            IsDiscontinued = isDiscontinued;
+            Price = price;
         }
 
         public ProductBasicInfoDTO(Product product)
         {
-            Nombre = product.ProductName;
-            Descontinuado = product.Discontinued;
+            Name = product.ProductName;
+            IsDiscontinued = product.Discontinued;
+            Price = product.UnitPrice;
         }
 
         public override Product GetDataBaseProductObject()
         {
-            /*
             return new Product()
             {
-                ProductName = Nombre,
-                Discontinued = Descontinuado
+                ProductName = Name,
+                Discontinued = IsDiscontinued,
+                UnitPrice = Price
             };
-            */
-            Product product = new();
-
-            product.ProductName = Nombre;
-            product.Discontinued = Descontinuado;
-
-            return product;
         }
 
         public override void ModifyDataBaseProduct(Product dataBaseProduct)
         {
-            dataBaseProduct.ProductName = Nombre;
-            dataBaseProduct.Discontinued = Descontinuado;
+            dataBaseProduct.ProductName = Name;
+            dataBaseProduct.Discontinued = IsDiscontinued;
+            dataBaseProduct.UnitPrice = Price;
         }
     }
 }
