@@ -74,7 +74,7 @@ namespace API_Rest.Controllers
                     id = EmployeeSC.AddNewEmployee(dbContext, newEmployee);
                 }
 
-                return Ok("Id: " + id);
+                return Ok("Registered Id: " + id);
             }
             catch (Exception ex)
             {

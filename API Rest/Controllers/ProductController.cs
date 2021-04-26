@@ -74,7 +74,7 @@ namespace API_Rest.Controllers
                     id = ProductSC.AddNewProduct(dbContext, newProduct);
                 }
 
-                return Ok("Id: " + id);
+                return Ok("Registered Id: " + id);
             }
             catch (Exception ex)
             {
